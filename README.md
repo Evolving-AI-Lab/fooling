@@ -13,25 +13,25 @@ Nguyen, Anh, Jason Yosinski, and Jeff Clune. "Deep Neural Networks are Easily Fo
   year={2014}
 }
 
+## Requirements
+This is an installation process that requires two main software packages (included in this package):
+1. Caffe: http://caffe.berkeleyvision.org
+  * Our libraries installed to work with Caffe
+    * Cuda 6.0
+    * Boost 1.52
+2. Sferes: https://github.com/jbmouret/sferes2
+  * Our libraries installed to work with Sferes
+    * OpenCV 2.4.10
+    * Boost 1.52
+    * g++ 4.9 (a C++ compiler compatible with C++11 standard)
+
 ## Installation
 
-TODO: Describe the installation process
+Please see the Installation_Guide.pdf for more details.
 
 ## Usage
 
 TODO: Write usage instructions
-
-## Contributing
-
-1. Fork it!
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
-
-## Credits
-
-TODO: Write credits
 
 ## License
 
