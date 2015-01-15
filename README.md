@@ -26,13 +26,16 @@ This is an installation process that requires two main software packages (includ
     * Boost 1.52
     * g++ 4.9 (a C++ compiler compatible with C++11 standard)
 
+Note: These are specific versions of the two frameworks with our additional work necessary to produce the images as in the paper. They are not the same as their master branches.
+
 ## Installation
 
 Please see the Installation_Guide.pdf for more details.
 
 ## Usage
 
-TODO: Write usage instructions
+* An MNIST experiment (Fig. 4, 5 in the paper) can be run directly on a local machine (4-core) within a reasonable amount of time (around ~5 minutes or less for 200 generations).
+* An ImageNet experiment needs to be run on a cluster environment. It took us ~4 days x 128 cores to run 5000 generations and produce 1000 images (Fig. 8 in the paper).
 
 ## License
 
