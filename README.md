@@ -2,7 +2,7 @@
 
 This is the code base used to reproduce the images in the paper:
 
-Anh Nguyen, Jason Yosinski, and Jeff Clune. "Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images." arXiv preprint arXiv:1412.1897 (2014).
+[Anh Nguyen](http://anhnguyen.me), [Jason Yosinski](http://yosinski.com/), and [Jeff Clune](http://jeffclune.com). "Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images." arXiv preprint arXiv:1412.1897 (2014).
 
 **If you use this software in an academic article, please cite:**
 
@@ -12,6 +12,8 @@ Anh Nguyen, Jason Yosinski, and Jeff Clune. "Deep Neural Networks are Easily Foo
   journal={arXiv preprint arXiv:1412.1897},
   year={2014}
 }
+
+For more information regarding the paper, please visit www.evolvingai.org/fooling
 
 ## Requirements
 This is an installation process that requires two main software packages (included in this package):
