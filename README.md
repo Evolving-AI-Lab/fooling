@@ -1,6 +1,6 @@
 # Fooling Code
 
-This is the code base used to reproduce the images in the paper:
+This is the code base used to reproduce the "fooling" images in the paper:
 
 [Anh Nguyen](http://anhnguyen.me), [Jason Yosinski](http://yosinski.com/), and [Jeff Clune](http://jeffclune.com). "Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images." arXiv preprint arXiv:1412.1897 (2014).
 
