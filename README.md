@@ -15,6 +15,7 @@ Nguyen, Anh, Jason Yosinski, and Jeff Clune. "Deep Neural Networks are Easily Fo
 
 ## Requirements
 This is an installation process that requires two main software packages (included in this package):
+
 1. Caffe: http://caffe.berkeleyvision.org
   * Our libraries installed to work with Caffe
     * Cuda 6.0
