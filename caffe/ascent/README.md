@@ -15,10 +15,9 @@ If you have any trouble getting the code to work, please get in touch, and we'll
 
  * The gist of the gradient ascent code (along with a lot of
 experimental bookkeeping) is in the
-[find_image](https://github.com/Evolving-AI-Lab/fooling/blob/master/caffe/ascent/find_fooling_image.py#L68-L274)
-function in find_fooling_image.py.
+[find_image function in find_fooling_image.py](https://github.com/Evolving-AI-Lab/fooling/blob/master/caffe/ascent/find_fooling_image.py#L68-L274).
  * If you happen to be working in a
-cluster environment that uses qsub, you may find the shell scripts
+cluster environment that uses ```qsub```, you may find the shell scripts
 useful; otherwise they probably won't help you much.
  * If you don't have a trained net around, you can download the trained model we used here: http://yosinski.cs.cornell.edu/yos_140311__caffenet_iter_450000
  * A file containing class labels is also used by the script and can be downloaded here: http://s.yosinski.com/synset_words.txt
