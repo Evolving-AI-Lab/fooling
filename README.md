@@ -22,6 +22,7 @@ This is an installation process that requires two main software packages (includ
   * Our libraries installed to work with Caffe
     * Cuda 6.0
     * Boost 1.52
+    * g++ 4.6
 2. Sferes: https://github.com/jbmouret/sferes2
   * Our libraries installed to work with Sferes
     * OpenCV 2.4.10
