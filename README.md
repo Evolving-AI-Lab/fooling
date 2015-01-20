@@ -2,16 +2,16 @@
 
 This is the code base used to reproduce the "fooling" images in the paper:
 
-[Anh Nguyen](http://anhnguyen.me), [Jason Yosinski](http://yosinski.com/), and [Jeff Clune](http://jeffclune.com). "Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images." arXiv preprint arXiv:1412.1897 (2014).
+[Anh Nguyen](http://anhnguyen.me), [Jason Yosinski](http://yosinski.com/), and [Jeff Clune](http://jeffclune.com). "[Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images.](http://arxiv.org/abs/1412.1897)" arXiv preprint arXiv:1412.1897 (2014).
 
 **If you use this software in an academic article, please cite:**
 
-@article{nguyen2014deep,
-  title={Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images},
-  author={Nguyen, Anh and Yosinski, Jason and Clune, Jeff},
-  journal={arXiv preprint arXiv:1412.1897},
-  year={2014}
-}
+    @article{nguyen2014deep,
+      title={Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images},
+      author={Nguyen, Anh and Yosinski, Jason and Clune, Jeff},
+      journal={arXiv preprint arXiv:1412.1897},
+      year={2014}
+    }
 
 For more information regarding the paper, please visit www.evolvingai.org/fooling
 
@@ -22,6 +22,7 @@ This is an installation process that requires two main software packages (includ
   * Our libraries installed to work with Caffe
     * Cuda 6.0
     * Boost 1.52
+    * g++ 4.6
 2. Sferes: https://github.com/jbmouret/sferes2
   * Our libraries installed to work with Sferes
     * OpenCV 2.4.10
