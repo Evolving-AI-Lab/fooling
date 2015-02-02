@@ -6,7 +6,7 @@ is research code, and so it may contain paths and such that are
 particular to our setup that will need to be changed for your own
 setup.
 
-*Important note: this code requires the slightly modified version of caffe in this repository's [ascent](https://github.com/Evolving-AI-Lab/fooling/tree/ascent) branch. If you try running on master, you'll get an error about `backward_from_layer`.* See the below steps for using the correct branch.
+**Important note: this code requires the slightly modified version of caffe in this repository's [ascent](https://github.com/Evolving-AI-Lab/fooling/tree/ascent) branch. If you try running on master, you'll get an error about `backward_from_layer`.** See the below steps for using the correct branch.
 
 If you find any bugs, please submit a PR!
 
