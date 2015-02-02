@@ -31,13 +31,13 @@ def main(argv):
     parser.add_argument(
         "--model_def",
         default=os.path.join(pycaffe_dir,
-                "../examples/imagenet/imagenet_deploy.prototxt"),
+                "../models/bvlc_reference_caffenet/deploy.prototxt"),
         help="Model definition file."
     )
     parser.add_argument(
         "--pretrained_model",
         default=os.path.join(pycaffe_dir,
-                "../examples/imagenet/caffe_reference_imagenet_model"),
+                "../models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel"),
         help="Trained model weights file."
     )
     parser.add_argument(
@@ -60,21 +60,25 @@ def main(argv):
         "--mean_file",
         default=os.path.join(pycaffe_dir,
                              'caffe/imagenet/ilsvrc_2012_mean.npy'),
-        help="Data set image mean of H x W x K dimensions (numpy array). " +
-             "Set to '' for no mean subtraction."
+        help="Data set image mean of [Channels x Height x Width] dimensions " +
+             "(numpy array). Set to '' for no mean subtraction."
     )
     parser.add_argument(
         "--input_scale",
         type=float,
-        default=255,
-        help="Multiply input features by this scale before input to net"
+        help="Multiply input features by this scale to finish preprocessing."
+    )
+    parser.add_argument(
+        "--raw_scale",
+        type=float,
+        default=255.0,
+        help="Multiply raw input by this scale before preprocessing."
     )
     parser.add_argument(
         "--channel_swap",
         default='2,1,0',
         help="Order to permute input channels. The default converts " +
              "RGB -> BGR since BGR is the Caffe default by way of OpenCV."
-
     )
     parser.add_argument(
         "--ext",
@@ -85,12 +89,18 @@ def main(argv):
     args = parser.parse_args()
 
     image_dims = [int(s) for s in args.images_dim.split(',')]
-    channel_swap = [int(s) for s in args.channel_swap.split(',')]
+
+    mean, channel_swap = None, None
+    if args.mean_file:
+        mean = np.load(args.mean_file)
+    if args.channel_swap:
+        channel_swap = [int(s) for s in args.channel_swap.split(',')]
 
     # Make classifier.
     classifier = caffe.Classifier(args.model_def, args.pretrained_model,
-            image_dims=image_dims, gpu=args.gpu, mean_file=args.mean_file,
-            input_scale=args.input_scale, channel_swap=channel_swap)
+            image_dims=image_dims, gpu=args.gpu, mean=mean,
+            input_scale=args.input_scale, raw_scale=args.raw_scale,
+            channel_swap=channel_swap)
 
     if args.gpu:
         print 'GPU mode'

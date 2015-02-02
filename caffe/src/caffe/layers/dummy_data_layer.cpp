@@ -1,5 +1,3 @@
-// Copyright 2014 BVLC and contributors.
-
 #include <vector>
 
 #include "caffe/filler.hpp"
@@ -9,9 +7,9 @@
 namespace caffe {
 
 template <typename Dtype>
-void DummyDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
-      vector<Blob<Dtype>*>* top) {
-  const int num_top = top->size();
+void DummyDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
+  const int num_top = top.size();
   const DummyDataParameter& param = this->layer_param_.dummy_data_param();
   const int num_data_filler = param.data_filler_size();
   CHECK(num_data_filler == 0 || num_data_filler == 1 ||
@@ -34,7 +32,7 @@ void DummyDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
   // If refill_[i] is false, Forward does nothing for Blob i. We use this to
   // avoid wastefully refilling "constant" Blobs in every forward pass.
   // We first fill refill_ in with the INVERSE of its final values.
-  // The first time we run Forward from the SetUp method, we'll fill only the
+  // The first time we run Forward from the LayerSetUp method, we'll fill only
   // Blobs for which refill_ is normally false.  These Blobs will never be
   // filled again.
   refill_.clear();
@@ -72,7 +70,7 @@ void DummyDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
         (param.height_size() == 1) ? param.height(0) : param.height(i);
     const int width =
         (param.width_size() == 1) ? param.width(0) : param.width(i);
-    (*top)[i]->Reshape(num, channels, height, width);
+    top[i]->Reshape(num, channels, height, width);
   }
   // Run Forward once, with refill_ inverted, to fill the constant Blobs.
   this->Forward(bottom, top);
@@ -84,17 +82,16 @@ void DummyDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-Dtype DummyDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      vector<Blob<Dtype>*>* top) {
-  for (int i = 0; i < top->size(); ++i) {
+void DummyDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
+  for (int i = 0; i < top.size(); ++i) {
     const int filler_id = (fillers_.size() > 1) ? i : 0;
     if (refill_[filler_id]) {
-      fillers_[filler_id]->Fill((*top)[i]);
+      fillers_[filler_id]->Fill(top[i]);
     }
   }
-  return Dtype(0.);
 }
 
 INSTANTIATE_CLASS(DummyDataLayer);
-
+REGISTER_LAYER_CLASS(DUMMY_DATA, DummyDataLayer);
 }  // namespace caffe

@@ -11,7 +11,7 @@ plt.rcParams['image.interpolation'] = 'nearest'
 plt.rcParams['image.cmap'] = 'gray'
 
 # Make sure that caffe is on the python path:
-caffe_root = '../../'  # this file is normally in {caffe_root}/ascent. If it's elsewhere, change this path. 
+caffe_root = '../'  # this file is normally in {caffe_root}/ascent. If it's elsewhere, change this path. 
 import sys
 sys.path.insert(0, caffe_root + 'python')
 # If this next line fails, check the relevant paths.
@@ -276,7 +276,7 @@ def find_image(net, mnirgb, mn4d, labels, decay = .01, N = 300, rseed = 0,
 
 def main():
     parser = argparse.ArgumentParser(description='Finds images that activate a network in various ways.')
-    parser.add_argument('--lr', type = float, default = .01)
+    #parser.add_argument('--lr', type = float, default = .01)
     parser.add_argument('--decay', type = float, default = .01)
     parser.add_argument('--N', type = int, default = 300)
     parser.add_argument('--rseed', type = int, default = 0)
@@ -305,7 +305,7 @@ def main():
         print '\n\nFinding image'
         print 'prefix_str', prefix_str
         find_image(net, mnirgb, mn4d, labels,
-                   lr = args.lr, decay = args.decay, N = args.N, rseed = args.rseed,
+                   decay = args.decay, N = args.N, rseed = args.rseed,
                    push_idx = args.push_idx, start_at = args.start_at,
                    prefix = prefix_str)
 

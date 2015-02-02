@@ -1,4 +1,4 @@
-// Copyright 2014 BVLC and contributors.
+syntax = "proto2";
 
 package caffe;
 
@@ -26,6 +26,8 @@ message Datum {
   optional int32 label = 5;
   // Optionally, the datum could also hold float data.
   repeated float float_data = 6;
+  // If true data contains an encoded image that need to be decoded
+  optional bool encoded = 7 [default = false];
 }
 
 message FillerParameter {
@@ -54,38 +56,80 @@ message NetParameter {
   // If set False, then whether to carry out backward is determined
   // automatically according to the net structure and learning rates.
   optional bool force_backward = 5 [default = false];
+  // The current "state" of the network, including the phase, level, and stage.
+  // Some layers may be included/excluded depending on this state and the states
+  // specified in the layers' include and exclude fields.
+  optional NetState state = 6;
 }
 
+// NOTE
+// Update the next available ID when you add a new SolverParameter field.
+//
+// SolverParameter next available ID: 35 (last added: stepvalue)
 message SolverParameter {
-  // {train,test}_net specify a path to a file containing the {train,test} net
-  // parameters; {train,test}_net_param specify the net parameters directly
-  // inside the SolverParameter.
+  //////////////////////////////////////////////////////////////////////////////
+  // Specifying the train and test networks
   //
-  // Only either train_net or train_net_param (not both) should be specified.
-  // You may specify 0 or more test_net and/or test_net_param.  All
-  // nets specified using test_net_param will be tested first, followed by all
-  // nets specified using test_net (each processed in the order specified in
-  // the prototxt).
-  optional string train_net = 1; // The proto filename for the train net.
-  repeated string test_net = 2; // The proto filenames for the test nets.
-  optional NetParameter train_net_param = 21; // Full params for the train net.
-  repeated NetParameter test_net_param = 22; // Full params for the test nets.
-  // The number of iterations for each testing phase.
+  // Exactly one train net must be specified using one of the following fields:
+  //     train_net_param, train_net, net_param, net
+  // One or more test nets may be specified using any of the following fields:
+  //     test_net_param, test_net, net_param, net
+  // If more than one test net field is specified (e.g., both net and
+  // test_net are specified), they will be evaluated in the field order given
+  // above: (1) test_net_param, (2) test_net, (3) net_param/net.
+  // A test_iter must be specified for each test_net.
+  // A test_level and/or a test_stage may also be specified for each test_net.
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Proto filename for the train net, possibly combined with one or more
+  // test nets.
+  optional string net = 24;
+  // Inline train net param, possibly combined with one or more test nets.
+  optional NetParameter net_param = 25;
+
+  optional string train_net = 1; // Proto filename for the train net.
+  repeated string test_net = 2; // Proto filenames for the test nets.
+  optional NetParameter train_net_param = 21; // Inline train net params.
+  repeated NetParameter test_net_param = 22; // Inline test net params.
+
+  // The states for the train/test nets. Must be unspecified or
+  // specified once per net.
+  //
+  // By default, all states will have solver = true;
+  // train_state will have phase = TRAIN,
+  // and all test_state's will have phase = TEST.
+  // Other defaults are set according to the NetState defaults.
+  optional NetState train_state = 26;
+  repeated NetState test_state = 27;
+
+  // The number of iterations for each test net.
   repeated int32 test_iter = 3;
+
   // The number of iterations between two testing phases.
   optional int32 test_interval = 4 [default = 0];
   optional bool test_compute_loss = 19 [default = false];
+  // If true, run an initial test pass before the first iteration,
+  // ensuring memory availability and printing the starting value of the loss.
+  optional bool test_initialization = 32 [default = true];
   optional float base_lr = 5; // The base learning rate
   // the number of iterations between displaying info. If display = 0, no info
   // will be displayed.
   optional int32 display = 6;
+  // Display the loss averaged over the last average_loss iterations
+  optional int32 average_loss = 33 [default = 1];
   optional int32 max_iter = 7; // the maximum number of iterations
   optional string lr_policy = 8; // The learning rate decay policy.
   optional float gamma = 9; // The parameter to compute the learning rate.
   optional float power = 10; // The parameter to compute the learning rate.
   optional float momentum = 11; // The momentum value.
   optional float weight_decay = 12; // The weight decay.
-  optional int32 stepsize = 13; // the stepsize for learning rate policy "step"
+  // regularization types supported: L1 and L2
+  // controlled by weight_decay
+  optional string regularization_type = 29 [default = "L2"];
+  // the stepsize for learning rate policy "step"
+  optional int32 stepsize = 13;
+  // the stepsize for learning rate policy "multistep"
+  repeated int32 stepvalue = 34;
   optional int32 snapshot = 14 [default = 0]; // The snapshot interval
   optional string snapshot_prefix = 15; // The prefix for the snapshot.
   // whether to snapshot diff in the results or not. Snapshotting diff will help
@@ -103,6 +147,23 @@ message SolverParameter {
   // random number generator -- useful for reproducible results. Otherwise,
   // (and by default) initialize using a seed derived from the system clock.
   optional int64 random_seed = 20 [default = -1];
+
+  // Solver type
+  enum SolverType {
+    SGD = 0;
+    NESTEROV = 1;
+    ADAGRAD = 2;
+  }
+  optional SolverType solver_type = 30 [default = SGD];
+  // numerical stability for AdaGrad
+  optional float delta = 31 [default = 1e-8];
+
+  // If true, print information about the state of the net that may help with
+  // debugging learning problems.
+  optional bool debug_info = 23 [default = false];
+
+  // If false, don't save a snapshot after training finishes.
+  optional bool snapshot_after_train = 28 [default = true];
 }
 
 // A message that stores the solver snapshots
@@ -110,16 +171,55 @@ message SolverState {
   optional int32 iter = 1; // The current iteration
   optional string learned_net = 2; // The file that stores the learned net.
   repeated BlobProto history = 3; // The history for sgd solvers
+  optional int32 current_step = 4 [default = 0]; // The current step for learning rate
+}
+
+enum Phase {
+   TRAIN = 0;
+   TEST = 1;
+}
+
+message NetState {
+  optional Phase phase = 1 [default = TEST];
+  optional int32 level = 2 [default = 0];
+  repeated string stage = 3;
+}
+
+message NetStateRule {
+  // Set phase to require the NetState have a particular phase (TRAIN or TEST)
+  // to meet this rule.
+  optional Phase phase = 1;
+
+  // Set the minimum and/or maximum levels in which the layer should be used.
+  // Leave undefined to meet the rule regardless of level.
+  optional int32 min_level = 2;
+  optional int32 max_level = 3;
+
+  // Customizable sets of stages to include or exclude.
+  // The net must have ALL of the specified stages and NONE of the specified
+  // "not_stage"s to meet the rule.
+  // (Use multiple NetStateRules to specify conjunctions of stages.)
+  repeated string stage = 4;
+  repeated string not_stage = 5;
 }
 
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available ID: 27 (last added: dummy_data_param)
+// LayerParameter next available ID: 42 (last added: exp_param)
 message LayerParameter {
   repeated string bottom = 2; // the name of the bottom blobs
   repeated string top = 3; // the name of the top blobs
   optional string name = 4; // the layer name
+
+  // Rules controlling whether and when a layer is included in the network,
+  // based on the current NetState.  You may specify a non-zero number of rules
+  // to include OR exclude, but not both.  If no include or exclude rules are
+  // specified, the layer is always included.  If the current NetState meets
+  // ANY (i.e., one or more) of the specified rules, the layer is
+  // included/excluded.
+  repeated NetStateRule include = 32;
+  repeated NetStateRule exclude = 33;
 
   // NOTE
   // Add new LayerTypes to the enum below in lexicographical order (other than
@@ -127,22 +227,25 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 33 (last added: DUMMY_DATA)
+  // LayerType next available ID: 39 (last added: EXP)
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
     // the type is unspecified).
     NONE = 0;
+    ABSVAL = 35;
     ACCURACY = 1;
     ARGMAX = 30;
     BNLL = 2;
     CONCAT = 3;
+    CONTRASTIVE_LOSS = 37;
     CONVOLUTION = 4;
     DATA = 5;
     DROPOUT = 6;
     DUMMY_DATA = 32;
     EUCLIDEAN_LOSS = 7;
     ELTWISE = 25;
+    EXP = 38;
     FLATTEN = 8;
     HDF5_DATA = 9;
     HDF5_OUTPUT = 10;
@@ -154,14 +257,17 @@ message LayerParameter {
     LRN = 15;
     MEMORY_DATA = 29;
     MULTINOMIAL_LOGISTIC_LOSS = 16;
+    MVN = 34;
     POOLING = 17;
     POWER = 26;
     RELU = 18;
     SIGMOID = 19;
     SIGMOID_CROSS_ENTROPY_LOSS = 27;
+    SILENCE = 36;
     SOFTMAX = 20;
     SOFTMAX_LOSS = 21;
     SPLIT = 22;
+    SLICE = 33;
     TANH = 23;
     WINDOW_DATA = 24;
     THRESHOLD = 31;
@@ -170,31 +276,65 @@ message LayerParameter {
 
   // The blobs containing the numeric parameters of the layer
   repeated BlobProto blobs = 6;
+  // The names of the parameter blobs -- useful for sharing parameters among
+  // layers (but never required).
+  repeated string param = 1001;
+  // Whether to require shared weights to have the same shape, or just the same
+  // count -- defaults to STRICT if unspecified.
+  repeated DimCheckMode blob_share_mode = 1002;
+  enum DimCheckMode {
+    // STRICT (default) requires that num, channels, height, width each match.
+    STRICT = 0;
+    // PERMISSIVE requires only the count (num*channels*height*width) to match.
+    PERMISSIVE = 1;
+  }
   // The ratio that is multiplied on the global learning rate. If you want to
   // set the learning ratio for one blob, you need to set it for all blobs.
   repeated float blobs_lr = 7;
   // The weight decay that is multiplied on the global weight decay.
   repeated float weight_decay = 8;
 
+  // The amount of weight to assign each top blob in the objective.
+  // Each layer assigns a default value, usually of either 0 or 1,
+  // to each top blob.
+  repeated float loss_weight = 35;
+
+  optional AccuracyParameter accuracy_param = 27;
   optional ArgMaxParameter argmax_param = 23;
   optional ConcatParameter concat_param = 9;
+  optional ContrastiveLossParameter contrastive_loss_param = 40;
   optional ConvolutionParameter convolution_param = 10;
   optional DataParameter data_param = 11;
   optional DropoutParameter dropout_param = 12;
   optional DummyDataParameter dummy_data_param = 26;
   optional EltwiseParameter eltwise_param = 24;
+  optional ExpParameter exp_param = 41;
   optional HDF5DataParameter hdf5_data_param = 13;
   optional HDF5OutputParameter hdf5_output_param = 14;
+  optional HingeLossParameter hinge_loss_param = 29;
   optional ImageDataParameter image_data_param = 15;
   optional InfogainLossParameter infogain_loss_param = 16;
   optional InnerProductParameter inner_product_param = 17;
   optional LRNParameter lrn_param = 18;
   optional MemoryDataParameter memory_data_param = 22;
+  optional MVNParameter mvn_param = 34;
   optional PoolingParameter pooling_param = 19;
   optional PowerParameter power_param = 21;
-  optional WindowDataParameter window_data_param = 20;
+  optional ReLUParameter relu_param = 30;
+  optional SigmoidParameter sigmoid_param = 38;
+  optional SoftmaxParameter softmax_param = 39;
+  optional SliceParameter slice_param = 31;
+  optional TanHParameter tanh_param = 37;
   optional ThresholdParameter threshold_param = 25;
-  optional HingeLossParameter hinge_loss_param = 29;
+  optional WindowDataParameter window_data_param = 20;
+
+  // Parameters for data pre-processing.
+  optional TransformationParameter transform_param = 36;
+
+  // Note: certain layers may have more than one computational engine
+  // for their implementation. These layers include an Engine type and
+  // engine parameter for selecting the implementation.
+  // The default for the engine is set by the ENGINE switch at compile-time.
 
   // DEPRECATED: The layer parameters specified as a V0LayerParameter.
   // This should never be used by any code except to upgrade to the new
@@ -202,10 +342,38 @@ message LayerParameter {
   optional V0LayerParameter layer = 1;
 }
 
+// Message that stores parameters used to apply transformation
+// to the data layer's data
+message TransformationParameter {
+  // For data pre-processing, we can do simple scaling and subtracting the
+  // data mean, if provided. Note that the mean subtraction is always carried
+  // out before scaling.
+  optional float scale = 1 [default = 1];
+  // Specify if we want to randomly mirror data.
+  optional bool mirror = 2 [default = false];
+  // Specify if we would like to randomly crop an image.
+  optional uint32 crop_size = 3 [default = 0];
+  // mean_file and mean_value cannot be specified at the same time
+  optional string mean_file = 4;
+  // if specified can be repeated once (would substract it from all the channels)
+  // or can be repeated the same number of times as channels
+  // (would subtract them from the corresponding channel)
+  repeated float mean_value = 5;
+}
+
+// Message that stores parameters used by AccuracyLayer
+message AccuracyParameter {
+  // When computing accuracy, count as correct by comparing the true label to
+  // the top k scoring classes.  By default, only compare to the top scoring
+  // class (i.e. argmax).
+  optional uint32 top_k = 1 [default = 1];
+}
+
 // Message that stores parameters used by ArgMaxLayer
 message ArgMaxParameter {
   // If true produce pairs (argmax, maxval)
   optional bool out_max_val = 1 [default = false];
+  optional uint32 top_k = 2 [default = 1];
 }
 
 // Message that stores parameters used by ConcatLayer
@@ -216,16 +384,36 @@ message ConcatParameter {
   optional uint32 concat_dim = 1 [default = 1];
 }
 
+// Message that stores parameters used by ContrastiveLossLayer
+message ContrastiveLossParameter {
+  //margin for dissimilar pair
+  optional float margin = 1 [default = 1.0];
+}
+
 // Message that stores parameters used by ConvolutionLayer
 message ConvolutionParameter {
   optional uint32 num_output = 1; // The number of outputs for the layer
   optional bool bias_term = 2 [default = true]; // whether to have bias terms
-  optional uint32 pad = 3 [default = 0]; // The padding size
-  optional uint32 kernel_size = 4; // The kernel size
+  // Pad, kernel size, and stride are all given as a single value for equal
+  // dimensions in height and width or as Y, X pairs.
+  optional uint32 pad = 3 [default = 0]; // The padding size (equal in Y, X)
+  optional uint32 pad_h = 9 [default = 0]; // The padding height
+  optional uint32 pad_w = 10 [default = 0]; // The padding width
+  optional uint32 kernel_size = 4; // The kernel size (square)
+  optional uint32 kernel_h = 11; // The kernel height
+  optional uint32 kernel_w = 12; // The kernel width
   optional uint32 group = 5 [default = 1]; // The group size for group conv
-  optional uint32 stride = 6 [default = 1]; // The stride
+  optional uint32 stride = 6 [default = 1]; // The stride (equal in Y, X)
+  optional uint32 stride_h = 13; // The stride height
+  optional uint32 stride_w = 14; // The stride width
   optional FillerParameter weight_filler = 7; // The filler for the weight
   optional FillerParameter bias_filler = 8; // The filler for the bias
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 15 [default = DEFAULT];
 }
 
 // Message that stores parameters used by DataLayer
@@ -236,23 +424,25 @@ message DataParameter {
   }
   // Specify the data source.
   optional string source = 1;
-  // For data pre-processing, we can do simple scaling and subtracting the
-  // data mean, if provided. Note that the mean subtraction is always carried
-  // out before scaling.
-  optional float scale = 2 [default = 1];
-  optional string mean_file = 3;
   // Specify the batch size.
   optional uint32 batch_size = 4;
-  // Specify if we would like to randomly crop an image.
-  optional uint32 crop_size = 5 [default = 0];
-  // Specify if we want to randomly mirror data.
-  optional bool mirror = 6 [default = false];
   // The rand_skip variable is for the data layer to skip a few data points
   // to avoid all asynchronous sgd clients to start at the same point. The skip
   // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
-  // be larger than the number of keys in the leveldb.
+  // be larger than the number of keys in the database.
   optional uint32 rand_skip = 7 [default = 0];
   optional DB backend = 8 [default = LEVELDB];
+  // DEPRECATED. See TransformationParameter. For data pre-processing, we can do
+  // simple scaling and subtracting the data mean, if provided. Note that the
+  // mean subtraction is always carried out before scaling.
+  optional float scale = 2 [default = 1];
+  optional string mean_file = 3;
+  // DEPRECATED. See TransformationParameter. Specify if we would like to randomly
+  // crop an image.
+  optional uint32 crop_size = 5 [default = 0];
+  // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
+  // data.
+  optional bool mirror = 6 [default = false];
 }
 
 // Message that stores parameters used by DropoutLayer
@@ -283,14 +473,24 @@ message EltwiseParameter {
   enum EltwiseOp {
     PROD = 0;
     SUM = 1;
+    MAX = 2;
   }
   optional EltwiseOp operation = 1 [default = SUM]; // element-wise operation
   repeated float coeff = 2; // blob-wise coefficient for SUM operation
+
+  // Whether to use an asymptotically slower (for >2 inputs) but stabler method
+  // of computing the gradient for the PROD operation. (No effect for SUM op.)
+  optional bool stable_prod_grad = 3 [default = true];
 }
 
-// Message that stores parameters used by ThresholdLayer
-message ThresholdParameter {
-  optional float threshold = 1 [default = 0]; // Strictly Positive values
+// Message that stores parameters used by ExpLayer
+message ExpParameter {
+  // ExpLayer computes outputs y = base ^ (shift + scale * x), for base > 0.
+  // Or if base is set to the default (-1), base is set to e,
+  // so y = exp(shift + scale * x).
+  optional float base = 1 [default = -1.0];
+  optional float scale = 2 [default = 1.0];
+  optional float shift = 3 [default = 0.0];
 }
 
 // Message that stores parameters used by HDF5DataLayer
@@ -307,9 +507,9 @@ message HDF5OutputParameter {
 }
 
 message HingeLossParameter {
-  enum Norm {    
+  enum Norm {
     L1 = 1;
-    L2 = 2;    
+    L2 = 2;
   }
   // Specify the Norm to use L1 or L2
   optional Norm norm = 1 [default = L1];
@@ -319,30 +519,32 @@ message HingeLossParameter {
 message ImageDataParameter {
   // Specify the data source.
   optional string source = 1;
-  // For data pre-processing, we can do simple scaling and subtracting the
-  // data mean, if provided. Note that the mean subtraction is always carried
-  // out before scaling.
-  optional float scale = 2 [default = 1];
-  optional string mean_file = 3;
   // Specify the batch size.
   optional uint32 batch_size = 4;
-  // Specify if we would like to randomly crop an image.
-  optional uint32 crop_size = 5 [default = 0];
-  // Specify if we want to randomly mirror data.
-  optional bool mirror = 6 [default = false];
   // The rand_skip variable is for the data layer to skip a few data points
   // to avoid all asynchronous sgd clients to start at the same point. The skip
   // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
-  // be larger than the number of keys in the leveldb.
+  // be larger than the number of keys in the database.
   optional uint32 rand_skip = 7 [default = 0];
   // Whether or not ImageLayer should shuffle the list of files at every epoch.
   optional bool shuffle = 8 [default = false];
   // It will also resize images if new_height or new_width are not zero.
   optional uint32 new_height = 9 [default = 0];
   optional uint32 new_width = 10 [default = 0];
-  
-  // By default assumes images are in color
-  optional bool images_in_color = 11 [default = true];
+  // Specify if the images are color or gray
+  optional bool is_color = 11 [default = true];
+  // DEPRECATED. See TransformationParameter. For data pre-processing, we can do
+  // simple scaling and subtracting the data mean, if provided. Note that the
+  // mean subtraction is always carried out before scaling.
+  optional float scale = 2 [default = 1];
+  optional string mean_file = 3;
+  // DEPRECATED. See TransformationParameter. Specify if we would like to randomly
+  // crop an image.
+  optional uint32 crop_size = 5 [default = 0];
+  // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
+  // data.
+  optional bool mirror = 6 [default = false];
+  optional string root_folder = 12 [default = ""];
 }
 
 // Message that stores parameters InfogainLossLayer
@@ -369,6 +571,7 @@ message LRNParameter {
     WITHIN_CHANNEL = 1;
   }
   optional NormRegion norm_region = 4 [default = ACROSS_CHANNELS];
+  optional float k = 5 [default = 1.];
 }
 
 // Message that stores parameters used by MemoryDataLayer
@@ -379,6 +582,15 @@ message MemoryDataParameter {
   optional uint32 width = 4;
 }
 
+// Message that stores parameters used by MVNLayer
+message MVNParameter {
+  // This parameter can be set to false to normalize mean only
+  optional bool normalize_variance = 1 [default = true];
+
+  // This parameter can be set to true to perform DNN-like MVN
+  optional bool across_channels = 2 [default = false];
+}
+
 // Message that stores parameters used by PoolingLayer
 message PoolingParameter {
   enum PoolMethod {
@@ -387,11 +599,26 @@ message PoolingParameter {
     STOCHASTIC = 2;
   }
   optional PoolMethod pool = 1 [default = MAX]; // The pooling method
-  optional uint32 kernel_size = 2; // The kernel size
-  optional uint32 stride = 3 [default = 1]; // The stride
-  // The padding size -- currently implemented only for average and max pooling.
-  // average pooling zero pads. max pooling -inf pads.
-  optional uint32 pad = 4 [default = 0];
+  // Pad, kernel size, and stride are all given as a single value for equal
+  // dimensions in height and width or as Y, X pairs.
+  optional uint32 pad = 4 [default = 0]; // The padding size (equal in Y, X)
+  optional uint32 pad_h = 9 [default = 0]; // The padding height
+  optional uint32 pad_w = 10 [default = 0]; // The padding width
+  optional uint32 kernel_size = 2; // The kernel size (square)
+  optional uint32 kernel_h = 5; // The kernel height
+  optional uint32 kernel_w = 6; // The kernel width
+  optional uint32 stride = 3 [default = 1]; // The stride (equal in Y, X)
+  optional uint32 stride_h = 7; // The stride height
+  optional uint32 stride_w = 8; // The stride width
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 11 [default = DEFAULT];
+  // If global_pooling then it will pool over the size of the bottom by doing
+  // kernel_h = bottom->height and kernel_w = bottom->width
+  optional bool global_pooling = 12 [default = false];
 }
 
 // Message that stores parameters used by PowerLayer
@@ -400,6 +627,67 @@ message PowerParameter {
   optional float power = 1 [default = 1.0];
   optional float scale = 2 [default = 1.0];
   optional float shift = 3 [default = 0.0];
+}
+
+// Message that stores parameters used by ReLULayer
+message ReLUParameter {
+  // Allow non-zero slope for negative inputs to speed up optimization
+  // Described in:
+  // Maas, A. L., Hannun, A. Y., & Ng, A. Y. (2013). Rectifier nonlinearities
+  // improve neural network acoustic models. In ICML Workshop on Deep Learning
+  // for Audio, Speech, and Language Processing.
+  optional float negative_slope = 1 [default = 0];
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 2 [default = DEFAULT];
+}
+
+// Message that stores parameters used by SigmoidLayer
+message SigmoidParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+}
+
+// Message that stores parameters used by SliceLayer
+message SliceParameter {
+  // SliceLayer needs to know which dimension to slice across.
+  // Currently, SliceLayer only supports slicing across num (dim 0)
+  // and channels (dim 1).
+  // By default, SliceLayer slices across channels.
+  optional uint32 slice_dim = 1 [default = 1];
+  repeated uint32 slice_point = 2;
+}
+
+// Message that stores parameters used by SoftmaxLayer, SoftmaxWithLossLayer
+message SoftmaxParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+}
+
+// Message that stores parameters used by TanHLayer
+message TanHParameter {
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 1 [default = DEFAULT];
+}
+
+// Message that stores parameters used by ThresholdLayer
+message ThresholdParameter {
+  optional float threshold = 1 [default = 0]; // Strictly positive values
 }
 
 // Message that stores parameters used by WindowDataLayer
@@ -430,6 +718,10 @@ message WindowDataParameter {
   // warp: cropped window is warped to a fixed size and aspect ratio
   // square: the tightest square around the window is cropped
   optional string crop_mode = 11 [default = "warp"];
+  // cache_images: will load all images in memory for faster access
+  optional bool cache_images = 12 [default = false];
+  // append root_folder to locate images
+  optional string root_folder = 13 [default = ""];
 }
 
 // DEPRECATED: V0LayerParameter is the old way of specifying layer parameters
@@ -459,6 +751,7 @@ message V0LayerParameter {
   optional uint32 local_size = 13 [default = 5]; // for local response norm
   optional float alpha = 14 [default = 1.]; // for local response norm
   optional float beta = 15 [default = 0.75]; // for local response norm
+  optional float k = 22 [default = 1.];
 
   // For data layers, specify the data source
   optional string source = 16;
@@ -485,7 +778,7 @@ message V0LayerParameter {
   // The rand_skip variable is for the data layer to skip a few data points
   // to avoid all asynchronous sgd clients to start at the same point. The skip
   // point would be set as rand_skip * rand(0,1). Note that rand_skip should not
-  // be larger than the number of keys in the leveldb.
+  // be larger than the number of keys in the database.
   optional uint32 rand_skip = 53 [default = 0];
 
   // Fields related to detection (det_*)

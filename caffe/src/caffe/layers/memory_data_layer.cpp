@@ -1,27 +1,53 @@
-// Copyright 2014 BVLC and contributors.
-
 #include <vector>
 
+#include "caffe/data_layers.hpp"
 #include "caffe/layer.hpp"
-#include "caffe/vision_layers.hpp"
+#include "caffe/util/io.hpp"
 
 namespace caffe {
 
 template <typename Dtype>
-void MemoryDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
-     vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
+void MemoryDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+     const vector<Blob<Dtype>*>& top) {
   batch_size_ = this->layer_param_.memory_data_param().batch_size();
-  datum_channels_ = this->layer_param_.memory_data_param().channels();
-  datum_height_ = this->layer_param_.memory_data_param().height();
-  datum_width_ = this->layer_param_.memory_data_param().width();
-  datum_size_ = datum_channels_ * datum_height_ * datum_width_;
-  CHECK_GT(batch_size_ * datum_size_, 0) << "batch_size, channels, height,"
-    " and width must be specified and positive in memory_data_param";
-  (*top)[0]->Reshape(batch_size_, datum_channels_, datum_height_, datum_width_);
-  (*top)[1]->Reshape(batch_size_, 1, 1, 1);
+  channels_ = this->layer_param_.memory_data_param().channels();
+  height_ = this->layer_param_.memory_data_param().height();
+  width_ = this->layer_param_.memory_data_param().width();
+  size_ = channels_ * height_ * width_;
+  CHECK_GT(batch_size_ * size_, 0) <<
+      "batch_size, channels, height, and width must be specified and"
+      " positive in memory_data_param";
+  top[0]->Reshape(batch_size_, channels_, height_, width_);
+  top[1]->Reshape(batch_size_, 1, 1, 1);
+  added_data_.Reshape(batch_size_, channels_, height_, width_);
+  added_label_.Reshape(batch_size_, 1, 1, 1);
   data_ = NULL;
   labels_ = NULL;
+  added_data_.cpu_data();
+  added_label_.cpu_data();
+}
+
+template <typename Dtype>
+void MemoryDataLayer<Dtype>::AddDatumVector(const vector<Datum>& datum_vector) {
+  CHECK(!has_new_data_) <<
+      "Can't add Datum when earlier ones haven't been consumed"
+      << " by the upper layers";
+  size_t num = datum_vector.size();
+  CHECK_GT(num, 0) << "There is no datum to add";
+  CHECK_LE(num, batch_size_) <<
+      "The number of added datum must be no greater than the batch size";
+
+  // Apply data transformations (mirror, scale, crop...)
+  this->data_transformer_.Transform(datum_vector, &added_data_);
+  // Copy Labels
+  Dtype* top_label = added_label_.mutable_cpu_data();
+  for (int item_id = 0; item_id < num; ++item_id) {
+    top_label[item_id] = datum_vector[item_id].label();
+  }
+  // num_images == batch_size_
+  Dtype* top_data = added_data_.mutable_cpu_data();
+  Reset(top_data, top_label, batch_size_);
+  has_new_data_ = true;
 }
 
 template <typename Dtype>
@@ -36,15 +62,15 @@ void MemoryDataLayer<Dtype>::Reset(Dtype* data, Dtype* labels, int n) {
 }
 
 template <typename Dtype>
-Dtype MemoryDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      vector<Blob<Dtype>*>* top) {
+void MemoryDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
   CHECK(data_) << "MemoryDataLayer needs to be initalized by calling Reset";
-  (*top)[0]->set_cpu_data(data_ + pos_ * datum_size_);
-  (*top)[1]->set_cpu_data(labels_ + pos_);
+  top[0]->set_cpu_data(data_ + pos_ * size_);
+  top[1]->set_cpu_data(labels_ + pos_);
   pos_ = (pos_ + batch_size_) % n_;
-  return Dtype(0.);
+  has_new_data_ = false;
 }
 
 INSTANTIATE_CLASS(MemoryDataLayer);
-
+REGISTER_LAYER_CLASS(MEMORY_DATA, MemoryDataLayer);
 }  // namespace caffe

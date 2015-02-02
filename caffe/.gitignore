@@ -5,9 +5,7 @@
 *.lo
 *.o
 *.cuo
-*.png
-*.jpg
-*.jpeg
+
 # Compiled Dynamic libraries
 *.so
 *.dylib
@@ -28,7 +26,44 @@
 # Compiled MATLAB
 *.mex*
 
-# build, distribute, and bins
+# IPython notebook checkpoints
+.ipynb_checkpoints
+
+# CMake generated files
+*.gen.cmake
+
+# Editor temporaries
+*.swp
+*~
+
+# Sublime Text settings
+*.sublime-workspace
+*.sublime-project
+
+# Eclipse Project settings
+*.*project
+.settings
+
+# OSX dir files
+.DS_Store
+
+## Caffe
+
+# User's build configuration
+Makefile.config
+
+# Data and models are either
+# 1. reference, and not casually committed
+# 2. custom, and live on their own unless they're deliberated contributed
+data/*
+models/*
+*.caffemodel
+*.solverstate
+*.binaryproto
+*leveldb
+*lmdb
+
+# build, distribute, and bins (+ python proto bindings)
 build
 .build_debug/*
 .build_release/*
@@ -37,29 +72,17 @@ distribute/*
 *.bin
 python/caffe/proto/
 
-# Editor temporaries
-*.swp
-*~
-
-# IPython notebook checkpoints
-.ipynb_checkpoints
-
-## Caffe
-
-# User's build configuration
-#Makefile.config
-
-# Data and examples are either
-# 1. reference, and not casually committed
-# 2. custom, and live on their own unless they're deliberated contributed
-data/*
-examples/*
-
 # Generated documentation
 docs/_site
+docs/gathered
 _site
+doxygen
+docs/dev
 
-# Sublime Text settings
-*.sublime-workspace
-*.sublime-project
-
+# LevelDB files
+*.sst
+*.ldb
+LOCK
+LOG*
+CURRENT
+MANIFEST-*
