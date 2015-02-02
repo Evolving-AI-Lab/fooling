@@ -35,6 +35,107 @@ def _Net_params(self):
                         for name, lr in zip(self._layer_names, self.layers)
                         if len(lr.blobs) > 0])
 
+
+#####################
+# JBY: Begin added code
+#####################
+    
+def _Net_ForwardFrom(self, input_layer, output_layer, input_data, shape_ref=None):
+    """
+    Set the layer with name input_layer to input_data, do a
+    forward pass to the layer with name output_layer, and return
+    the output of that layer. input_data must be the correct
+    shape.
+    """
+
+    input_idx = self.complete_layers.index(input_layer)
+    output_idx = self.complete_layers.index(output_layer)
+
+    #input_blob = np.zeros(self.blobs[input_layer].data.shape, dtype=np.float32)
+    if shape_ref == None:
+        shape_ref = output_layer
+    try:
+        out_blob = self.blobs[shape_ref]
+    except KeyError:
+        raise Exception('Cannot figure out the output shape from layer '
+                        '%s. Instead, provide a shape_ref that exists in'
+                        ' .blobs, i.e. one of these: %s)' % (shape_ref, self.blobs))
+    output_blob = np.zeros(out_blob.data.shape, dtype=np.float32)
+
+    self.ForwardPartial([input_data], [output_blob], input_idx, output_idx)
+
+    return output_blob
+
+def _Net_BackwardFrom(self, input_layer, output_layer, input_data):
+    """
+    Set the layer with name input_layer to input_data, do a
+    backward pass to the layer with name output_layer, and return
+    the diff at that output of that layer. input_data must be the correct
+    shape.
+    """
+
+    input_idx = self.complete_layers.index(input_layer)
+    output_idx = self.complete_layers.index(output_layer)
+
+    shape_ref = output_layer
+    try:
+        out_blob = self.blobs[shape_ref]
+    except KeyError:
+        raise Exception('Cannot figure out the output shape from layer '
+                        '%s. Instead, modify this function and provide a '
+                        'shape_ref that exists in'
+                        ' .blobs, i.e. one of these: %s)' % (shape_ref, self.blobs))
+    output_blob = np.zeros(out_blob.data.shape, dtype=np.float32)
+
+    #print '***p ', 'input_idx', input_idx, 'output_idx', output_idx
+    self.BackwardPartial([input_data], [output_blob], input_idx, output_idx)
+
+    return output_blob
+
+def _Net_zero(self, zero_param_diffs = True):
+    """
+    Set all activations (data and diffs) in the net to zero.
+
+    Take
+    zero_param_diffs: If True, also zero the parameter blob diffs,
+                      else skip parameter blobs.
+    """
+    
+    for blob_name, blob in self.blobs.items():
+        blob.data[...] = 0
+        blob.diff[...] = 0
+    if zero_param_diffs:
+        for param_name, blob_vec in self.params.items():
+            for blob in blob_vec:
+                blob.diff[...] = 0
+
+def _Net_backward_from_layer(self, start_name, start_diff, diffs=None):
+    """
+    Backward pass starting from somewhere in the middle of the
+    network, starting with the provided diffs.
+
+    Take
+    start_name: layer at which to begin the backward pass
+    start_diff: diff to set at start_name layer
+    diffs: list of diffs to return in addition to bottom diffs.
+
+    Give
+    outs: {blob name: diff ndarray} dict.
+    """
+
+    if start_diff.shape != self.blobs[start_name].diff.shape:
+        raise Exception('Expected start_diff of shape %s but got %s' % (self.blobs[start_name].diff.shape, start_diff.shape))
+
+    self.blobs[start_name].diff[...] = start_diff
+
+    return self.backward(start=start_name, diffs=diffs)
+
+#####################
+# JBY: End added code
+#####################
+
+
+
 def _Net_forward(self, blobs=None, start=None, end=None, **kwargs):
     """
     Forward pass: prepare inputs and run the net forward.
@@ -380,6 +481,10 @@ def _Net_batch(self, blobs):
 # Attach methods to Net.
 Net.blobs = _Net_blobs
 Net.params = _Net_params
+Net.ForwardFrom = _Net_ForwardFrom
+Net.BackwardFrom = _Net_BackwardFrom
+Net.zero = _Net_zero
+Net.backward_from_layer = _Net_backward_from_layer
 Net.forward = _Net_forward
 Net.backward = _Net_backward
 Net.forward_all = _Net_forward_all
