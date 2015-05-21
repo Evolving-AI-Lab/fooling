@@ -34,7 +34,7 @@ Note: These are specific versions of the two frameworks with our additional work
 
 ## Installation
 
-Please see the [Installation_Guide.pdf](https://github.com/Evolving-AI-Lab/fooling/blob/master/Installation_Guide.pdf) for more details.
+Please see the [Installation_Guide](https://github.com/Evolving-AI-Lab/fooling/wiki/Installation-Guide) for more details.
 
 ## Usage
 
