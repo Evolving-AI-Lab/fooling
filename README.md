@@ -43,6 +43,10 @@ Please see the [Installation_Guide](https://github.com/Evolving-AI-Lab/fooling/w
 * [How to configure an experiment to test the evolutionary framework quickly](https://github.com/Evolving-AI-Lab/fooling/wiki/How-to-test-the-evolutionary-framework-quickly)
 * To reproduce the gradient ascent fooling images (Figures 13, S3, S4, S5, S6, and S7 from the paper), see the [documentation in the caffe/ascent directory](https://github.com/Evolving-AI-Lab/fooling/tree/ascent/caffe/ascent). You'll need to use the `ascent` branch instead of master, because the two required versions of Caffe are different.
 
+## Updates
+
+* Our fork project [here](https://github.com/Evolving-AI-Lab/innovation-engine) has support for the **latest Caffe** and experiments to create *recognizable* images instead of unrecognizable.
+
 ## License
 
 Please refer to the licenses of Sferes and Caffe projects.
