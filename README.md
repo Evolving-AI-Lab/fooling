@@ -2,15 +2,16 @@
 
 This is the code base used to reproduce the "fooling" images in the paper:
 
-[Anh Nguyen](http://anhnguyen.me), [Jason Yosinski](http://yosinski.com/), and [Jeff Clune](http://jeffclune.com). "[Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images.](http://arxiv.org/abs/1412.1897)" arXiv preprint arXiv:1412.1897 (2014).
+[Nguyen A](http://anhnguyen.me), [Yosinski J](http://yosinski.com/), [Clune J](http://jeffclune.com). ["Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images"](http://arxiv.org/abs/1412.1897). In Computer Vision and Pattern Recognition (CVPR '15), IEEE, 2015.
 
 **If you use this software in an academic article, please cite:**
 
-    @article{nguyen2014deep,
+    @inproceedings{nguyen2015deep,
       title={Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images},
       author={Nguyen, Anh and Yosinski, Jason and Clune, Jeff},
-      journal={arXiv preprint arXiv:1412.1897},
-      year={2014}
+      booktitle={Computer Vision and Pattern Recognition (CVPR), 2015 IEEE Conference on},
+      year={2015},
+      organization={IEEE}
     }
 
 For more information regarding the paper, please visit www.evolvingai.org/fooling
@@ -33,7 +34,7 @@ Note: These are specific versions of the two frameworks with our additional work
 
 ## Installation
 
-Please see the [Installation_Guide.pdf](https://github.com/Evolving-AI-Lab/fooling/blob/master/Installation_Guide.pdf) for more details.
+Please see the [Installation_Guide](https://github.com/Evolving-AI-Lab/fooling/wiki/Installation-Guide) for more details.
 
 ## Usage
 
@@ -41,6 +42,10 @@ Please see the [Installation_Guide.pdf](https://github.com/Evolving-AI-Lab/fooli
 * An ImageNet experiment needs to be run on a cluster environment. It took us ~4 days x 128 cores to run 5000 generations and produce 1000 images (Fig. 8 in the paper). 
 * [How to configure an experiment to test the evolutionary framework quickly](https://github.com/Evolving-AI-Lab/fooling/wiki/How-to-test-the-evolutionary-framework-quickly)
 * To reproduce the gradient ascent fooling images (Figures 13, S3, S4, S5, S6, and S7 from the paper), see the [documentation in the caffe/ascent directory](https://github.com/Evolving-AI-Lab/fooling/tree/ascent/caffe/ascent). You'll need to use the `ascent` branch instead of master, because the two required versions of Caffe are different.
+
+## Updates
+
+* Our fork project [here](https://github.com/Evolving-AI-Lab/innovation-engine) has support for the **latest Caffe** and experiments to create *recognizable* images instead of unrecognizable.
 
 ## License
 

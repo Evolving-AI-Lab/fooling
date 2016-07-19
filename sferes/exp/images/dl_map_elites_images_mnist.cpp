@@ -58,13 +58,6 @@ struct Params
 		SFERES_CONST float m_rate_add_neuron = 0.5f;
 		SFERES_CONST float m_rate_del_neuron = 0.2f;
 
-		// Use Joost's parameters for Retina experiments
-//		SFERES_CONST float m_rate_add_conn = 0.09f;
-//		SFERES_CONST float m_rate_del_conn = 0.08f;
-//		SFERES_CONST float m_rate_change_conn = 0.0f;
-//		SFERES_CONST float m_rate_add_neuron = 0.05f;
-//		SFERES_CONST float m_rate_del_neuron = 0.04f;
-
 		SFERES_CONST init_t init = ff;
 	};
 

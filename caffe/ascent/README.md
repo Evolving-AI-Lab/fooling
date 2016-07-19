@@ -22,7 +22,7 @@ experimental bookkeeping) is in the
  * If you happen to be working in a
 cluster environment that uses ```qsub```, you may find the shell scripts
 useful; otherwise they probably won't help you much.
- * If you don't have a trained net around, you can download the trained model we used here: http://yosinski.cs.cornell.edu/yos_140311__caffenet_iter_450000
+ * If you don't have a trained net around, you can download a model here: http://c.yosinski.com/caffenet-yos-weights
  * A file containing class labels is also used by the script and can be downloaded here: http://s.yosinski.com/synset_words.txt
 
 
@@ -47,7 +47,7 @@ Once Caffe is built, continue by fetching some auxiliary data (synsets.txt and a
     [~/fooling/caffe] $ cd data/ilsvrc12
     [~/fooling/caffe/data/ilsvrc12] $ ./get_ilsvrc_aux.sh
     [~/fooling/caffe/data/ilsvrc12] $ cd ../../ascent
-    [~/fooling/caffe/ascent] $ wget 'http://yosinski.cs.cornell.edu/yos_140311__caffenet_iter_450000'
+    [~/fooling/caffe/ascent] $ wget 'http://c.yosinski.com/caffenet-yos-weights'
 
 Now we're ready to run the optimization. To find a quick fooling image for the Lion class (idx 291) using only 3 gradient steps, run the following:
 
