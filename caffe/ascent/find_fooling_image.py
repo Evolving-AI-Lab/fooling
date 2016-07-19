@@ -26,8 +26,8 @@ def load_net_mean():
 
     model_def_file = 'deploy_1_forcebackward.prototxt'
 
-    # Can be downloaded from http://yosinski.cs.cornell.edu/yos_140311__caffenet_iter_450000
-    pretrained_model = 'yos_140311__caffenet_iter_450000'
+    # Can be downloaded from http://c.yosinski.com/caffenet-yos-weights
+    pretrained_model = 'caffenet-yos-weights'
 
     # Can be downloaded from http://s.yosinski.com/synset_words.txt
     with open('%s/data/ilsvrc12/synset_words.txt' % caffe_root) as ff:
